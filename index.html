@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebSocket Client</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #e0e5ec;
+      color: #333;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 50px auto;
+      padding: 40px;
+      background-color: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+
+    .container:hover {
+      transform: scale(1.02);
+    }
+
+    h1 {
+      color: #4A90E2;
+      font-size: 2.8em;
+      margin-bottom: 25px;
+      text-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .status {
+      font-size: 1.2em;
+      padding: 12px;
+      color: #28a745;
+      background-color: #d4edda;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      transition: background-color 0.3s ease;
+      font-weight: bold;
+    }
+
+    .status.error {
+      color: #dc3545;
+      background-color: #f8d7da;
+    }
+
+    .status.closed {
+      color: #ffc107;
+      background-color: #fff3cd;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: space-around;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+
+    button {
+      padding: 15px 30px;
+      font-size: 1.2em;
+      color: white;
+      background: linear-gradient(135deg, #4A90E2, #357ABD);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease, transform 0.3s ease;
+      display: flex;
+      align-items: center;
+    }
+
+    button:hover {
+      background: linear-gradient(135deg, #357ABD, #4A90E2);
+      transform: scale(1.05);
+    }
+
+    button i {
+      margin-right: 12px;
+    }
+
+    #output {
+      margin-top: 20px;
+      border-radius: 10px;
+      padding: 20px;
+      background-color: #fafafa;
+      height: 350px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      font-family: 'Courier New', monospace;
+      font-size: 1.1em;
+      color: #555;
+      white-space: pre-wrap;
+      box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.1);
+      background: #f1f1f1;
+    }
+
+    #output pre {
+      margin: 0;
+    }
+
+    @media screen and (max-width: 768px) {
+      .container {
+        padding: 20px;
+      }
+
+      button {
+        width: 100%;
+        padding: 18px;
+        font-size: 1.1em;
+      }
+
+      #output {
+        height: 250px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>WebSocket Client</h1>
+    <div class="status" id="status">Mencoba menghubungkan...</div>
+    <div class="buttons">
+      <button id="sendMessage"><i class="fas fa-paper-plane"></i>Kirim Pesan</button>
+      <button id="getLogs"><i class="fas fa-history"></i>Ambil Logs</button>
+    </div>
+    <div id="output"></div>
+  </div>
+
+  <script>
+    const ws = new WebSocket('ws://localhost:3000');
+    const output = document.getElementById('output');
+    const status = document.getElementById('status');
+
+    ws.onopen = () => {
+      status.textContent = 'Terhubung ke WebSocket server';
+      status.classList.remove('error', 'closed');
+      status.classList.add('status');
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      // Menghilangkan tanda kurung kurawal dan menampilkan data dengan lebih bersih
+      const formattedData = JSON.stringify(data, null, 2).replace(/[{}"]/g, '');  // Hapus tanda kurung dan kutip
+      output.textContent += formattedData + '\n';
+      output.scrollTop = output.scrollHeight;  // Auto-scroll ke bawah
+    };
+
+    ws.onerror = (err) => {
+      status.textContent = `Error: ${err.message}`;
+      status.classList.remove('status', 'closed');
+      status.classList.add('error');
+    };
+
+    ws.onclose = () => {
+      status.textContent = 'Koneksi WebSocket ditutup';
+      status.classList.remove('status', 'error');
+      status.classList.add('closed');
+    };
+
+    document.getElementById('sendMessage').addEventListener('click', () => {
+      ws.send('Halo Server! Keyword: alert');
+    });
+
+    document.getElementById('getLogs').addEventListener('click', () => {
+      ws.send('get_logs');
+    });
+  </script>
+</body>
+</html>
